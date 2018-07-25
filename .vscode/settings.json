@@ -1,14 +1,5 @@
 {
-	"auto-run-command.rules": [
-		{
-			"condition": [
-				"hasFile: wallaby.js"
-			],
-			"command": "wallaby.start",
-			"message": "Running Wallaby.js"
-		}
-	],
-	"editor.insertSpaces": false,
+	"editor.insertSpaces": true,
 	"editor.renderWhitespace": "all",
 	"editor.tabSize": 4,
 	"files.associations": {
@@ -18,18 +9,14 @@
 	"files.trimTrailingWhitespace": true,
 	"search.exclude": {
 		"**/*.js.map": true,
-		"**/*.ts.html": true,
-		"**/build/**": true,
 		"**/.git": true
 	},
 	"files.exclude": {
-		"**/.certs": true,
 		"**/.git": true,
 		"**/.svn": true,
 		"**/.hg": true,
 		"**/CVS": true,
 		"**/.DS_Store": true,
-		".drivers": true
 	},
 	"tslint.alwaysShowRuleFailuresAsWarnings": true,
 	"tslint.autoFixOnSave": true,

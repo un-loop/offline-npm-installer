@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
+        "jsx": "react",
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es2017",
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -11,7 +11,8 @@
         "noUnusedParameters": true,
         "pretty": true,
         "sourceMap": true,
-        "strict": true
+        "strict": true,
+        "target": "es2017"
     },
     "include": [
         "src/**/*.ts",

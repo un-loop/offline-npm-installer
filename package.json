@@ -32,11 +32,15 @@
   },
   "homepage": "https://github.com/joshuakgoldberg/offline-npm-installer#readme",
   "devDependencies": {
+    "@types/react": "^16.4.7",
+    "@types/react-dom": "^16.0.6",
     "tslint": "5.10.0",
     "tsutils": "^2.29.0",
     "typescript": "^2.9.2"
   },
   "dependencies": {
-    "electron": "^2.0.5"
+    "electron": "^2.0.5",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1"
   }
 }
