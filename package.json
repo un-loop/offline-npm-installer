@@ -1,7 +1,7 @@
 {
   "name": "offline-npm-installer",
   "version": "0.0.0",
-  "description": "Scripts and GUI for creating a prepopulated Verdaccio-compatible npm cache",
+  "description": "Scripts and GUI for creating a prepopulated Verdaccio-compatible npm cache.",
   "main": "src/main.js",
   "typings": "src/main.d.ts",
   "scripts": {
