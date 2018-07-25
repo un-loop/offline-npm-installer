@@ -1,24 +1,25 @@
 {
-	"editor.insertSpaces": true,
-	"editor.renderWhitespace": "all",
-	"editor.tabSize": 4,
-	"files.associations": {
-		"tsconfig*.json": "jsonc",
-		"tslint*.json": "jsonc"
-	},
-	"files.trimTrailingWhitespace": true,
-	"search.exclude": {
-		"**/*.js.map": true,
-		"**/.git": true
-	},
-	"files.exclude": {
-		"**/.git": true,
-		"**/.svn": true,
-		"**/.hg": true,
-		"**/CVS": true,
-		"**/.DS_Store": true,
-	},
-	"tslint.alwaysShowRuleFailuresAsWarnings": true,
-	"tslint.autoFixOnSave": true,
-	"typescript.tsdk": "node_modules\\typescript\\lib"
+  "editor.formatOnSave": true,
+  "editor.insertSpaces": true,
+  "editor.renderWhitespace": "all",
+  "editor.tabSize": 4,
+  "files.associations": {
+    "tsconfig*.json": "jsonc",
+    "tslint*.json": "jsonc"
+  },
+  "files.trimTrailingWhitespace": true,
+  "search.exclude": {
+    "**/*.js.map": true,
+    "**/.git": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true
+  },
+  "tslint.alwaysShowRuleFailuresAsWarnings": true,
+  "tslint.autoFixOnSave": true,
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 }
