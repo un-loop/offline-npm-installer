@@ -1,8 +1,6 @@
 {
 	"recommendations": [
 		"DavidAnson.vscode-markdownlint",
-		"eg2.tslint",
-		"gabrielgrinberg.auto-run-command",
-		"WallabyJs.wallaby-vscode"
+		"eg2.tslint"
 	]
 }
