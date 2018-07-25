@@ -1,15 +1,23 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Hello World!</title>
-  </head>
-  <body>
-    <div id="app"></div>
+<html lang="en">
 
-    <script>
-      // You can also require other files to run in this process
-      require("./src/renderer.js");
-    </script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>✨ Unloop Offline NPM Installer ✨</title>
+  <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+</head>
+
+<body>
+  <div id="app"></div>
+
+  <!-- Some Bootstrap components require jQuery and Popper -->
+  <script src="node_modules/jquery/dist/jquery.slim.js"></script>
+  <script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    require("./src/renderer.js");
+  </script>
+</body>
+
 </html>
