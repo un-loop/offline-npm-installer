@@ -1,0 +1,42 @@
+{
+  "name": "offline-npm-installer",
+  "version": "0.0.0",
+  "description": "Scripts and GUI for creating a prepopulated Verdaccio-compatible npm cache",
+  "main": "src/main.js",
+  "typings": "src/main.d.ts",
+  "scripts": {
+    "tsc": "tsc",
+    "lint": "tslint --config tslint.json --format stylish --project tsconfig.json",
+    "start": "electron .",
+    "watch": "tsc -w",
+    "verify": "npm run tsc && npm run lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joshuakgoldberg/offline-npm-installer.git"
+  },
+  "keywords": [
+    "npm",
+    "verdaccio",
+    "offline",
+    "unloop",
+    "cache",
+    "offline-npm-installer",
+    "yippee",
+    "hooray"
+  ],
+  "author": "Josh Goldberg <joshuakgoldberg@outlook.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/joshuakgoldberg/offline-npm-installer/issues"
+  },
+  "homepage": "https://github.com/joshuakgoldberg/offline-npm-installer#readme",
+  "devDependencies": {
+    "tslint": "5.10.0",
+    "tsutils": "^2.29.0",
+    "typescript": "^2.9.2"
+  },
+  "dependencies": {
+    "electron": "^2.0.5"
+  }
+}
