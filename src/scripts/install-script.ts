@@ -12,7 +12,9 @@ const libs: string[] = fse
   .map((item: string) => item.trim())
   .filter((item: string) => item.length > 0);
 console.log("The following libraries will be installed:");
-libs.forEach(lib => console.log(`* ${lib}`));
+libs.forEach(lib => {
+  console.log(`* ${lib}`);
+});
 
 // Clear NPM cache (required for packages to get cached by Verdaccio)
 console.log("Clearing NPM cache.");
@@ -64,12 +66,12 @@ function installPackages(verdaccio: childProcess.ChildProcess) {
       } --registry http://localhost:4873/ --no-save`
     );
 
-    install.stdout.on("data", (data: string) =>
-      console.log(`[npm stdout]: ${data.trim().replace("\n", " ")}`)
-    );
-    install.stderr.on("data", (data: string) =>
-      console.error(`[npm stderr]: ${data.trim().replace("\n", " ")}`)
-    );
+    install.stdout.on("data", (data: string) => {
+      console.log(`[npm stdout]: ${data.trim().replace("\n", " ")}`);
+    });
+    install.stderr.on("data", (data: string) => {
+      console.error(`[npm stderr]: ${data.trim().replace("\n", " ")}`);
+    });
 
     install.on("exit", () => {
       if (++packageNum < libs.length) {

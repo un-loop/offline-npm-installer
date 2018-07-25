@@ -16,6 +16,7 @@
     "promise-function-async": false,
     "typedef": false,
     "variable-name": false,
-    "only-arrow-functions": false
+    "only-arrow-functions": false,
+    "completed-docs": false
   }
 }
