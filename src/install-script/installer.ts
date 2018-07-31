@@ -145,8 +145,15 @@ export const installCache = (
     outMajor("Booting Verdaccio instance.");
 
     const verdaccio = exec(
-      `node ${joinPath(verdaccioPath, "build", "lib", "cli")}`
+      `node ${joinPath(
+        verdaccioPath,
+        "build",
+        "lib",
+        "cli"
+      )} --config ${joinPath(__dirname, "config.yaml")}`
     );
+
+    // const verdaccio = exec(`${joinPath(verdaccioPath, "bin", "verdaccio")}`);
 
     verdaccio.stdout.on("data", (data: string) => {
       outMinor(data.trim(), InfoSource.VERDACCIO);
