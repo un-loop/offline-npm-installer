@@ -2,3 +2,5 @@ node_modules/
 npm-debug.log
 src/**/*.js
 src/**/*.js.map
+src/install-script/out
+src/install-script/storage
