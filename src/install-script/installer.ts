@@ -61,12 +61,15 @@ export const installCache = (
   const outError = makeOutputter(onError, ScriptMessageType.ERROR);
   const outComplete = makeOutputter(onComplete, ScriptMessageType.COMPLETE);
 
+  const tempStoragePath = joinPath(__dirname, "storage");
+  const outputZipPath = joinPath(outputPath, "storage.zip");
+
   // Delete the storage directory and output the final results
   const endScript = () => {
     outMajor("Deleting temporary files.");
 
-    remove("./storage", () => {
-      outComplete(`Cache created at ${outputPath}/storage.zip!`);
+    remove(tempStoragePath, () => {
+      outComplete(`Cache created at ${outputZipPath}!`);
     });
   };
 
@@ -76,7 +79,7 @@ export const installCache = (
 
     ensureDir(outputPath, () => {
       const archive = archiver("zip");
-      const zipOut = createWriteStream(`${outputPath}/storage.zip`);
+      const zipOut = createWriteStream(outputZipPath);
 
       archive.on("end", endScript);
       archive.on("error", err => {
@@ -84,7 +87,7 @@ export const installCache = (
       });
 
       archive.pipe(zipOut);
-      archive.directory("./storage", false);
+      archive.directory(tempStoragePath, false);
       archive.finalize();
     });
   };
@@ -173,8 +176,8 @@ export const installCache = (
   const deleteOldFiles = () => {
     outMajor("Deleting old files.");
 
-    remove("./storage", () => {
-      remove(`${outputPath}/storage.zip`, startVerdaccio);
+    remove(tempStoragePath, () => {
+      remove(outputZipPath, startVerdaccio);
     });
   };
 
@@ -198,12 +201,10 @@ export const installCache = (
 
 const defaultPrint = (data: IScriptMessage) => {
   if (data.type !== ScriptMessageType.MINOR) {
-    console.log(`\n[${data.source}] ${data.message}\n`);
+    console.log(`** [${data.source}] ${data.message}\n`);
   } else {
     console.log(`[${data.source}] ${data.message}`);
   }
 };
 
 installCache(["lodash", "react"], defaultPrint, defaultPrint, defaultPrint);
-
-console.log(__dirname);
