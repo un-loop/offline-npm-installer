@@ -1,6 +1,7 @@
 import * as archiver from "archiver";
 import { ChildProcess, exec, spawn } from "child_process";
-import { createWriteStream, remove } from "fs-extra";
+import { createWriteStream, ensureDir, remove } from "fs-extra";
+import { join as joinPath } from "path";
 
 export enum ScriptMessageType {
   MINOR,
@@ -43,10 +44,17 @@ const makeOutputter = (
  */
 export const installCache = (
   packages: string[],
-  outputPath: string,
   onInfo: (data: IScriptMessage) => void,
   onError: (data: IScriptMessage) => void,
-  onComplete: (data: IScriptMessage) => void
+  onComplete: (data: IScriptMessage) => void,
+  outputPath: string = joinPath(__dirname, "out"),
+  verdaccioPath: string = joinPath(
+    __dirname,
+    "..",
+    "..",
+    "node_modules",
+    "verdaccio"
+  )
 ): void => {
   const outMinor = makeOutputter(onInfo, ScriptMessageType.MINOR);
   const outMajor = makeOutputter(onInfo, ScriptMessageType.MAJOR);
@@ -58,7 +66,7 @@ export const installCache = (
     outMajor("Deleting temporary files.");
 
     remove("./storage", () => {
-      outComplete(`\nCache created at ${outputPath}/storage.zip!`);
+      outComplete(`Cache created at ${outputPath}/storage.zip!`);
     });
   };
 
@@ -66,17 +74,19 @@ export const installCache = (
   const packageCache = () => {
     outMajor("Bundling the cache into a zip file.");
 
-    const archive = archiver("zip");
-    const zipOut = createWriteStream(`${outputPath}/storage.zip`);
+    ensureDir(outputPath, () => {
+      const archive = archiver("zip");
+      const zipOut = createWriteStream(`${outputPath}/storage.zip`);
 
-    archive.on("end", endScript);
-    archive.on("error", err => {
-      outError(err.message, InfoSource.ARCHIVER);
+      archive.on("end", endScript);
+      archive.on("error", err => {
+        outError(err.message, InfoSource.ARCHIVER);
+      });
+
+      archive.pipe(zipOut);
+      archive.directory("./storage", false);
+      archive.finalize();
     });
-
-    archive.pipe(zipOut);
-    archive.directory("storage/", false);
-    archive.finalize();
   };
 
   // Stop Verdaccio
@@ -98,7 +108,7 @@ export const installCache = (
 
     const installPackage = () => {
       outMajor(
-        `Installing '${packages[packageNum]} (${packageNum + 1}/${
+        `Installing '${packages[packageNum]}' (${packageNum + 1}/${
           packages.length
         })`
       );
@@ -134,7 +144,9 @@ export const installCache = (
   const startVerdaccio = () => {
     outMajor("Booting Verdaccio instance.");
 
-    const verdaccio = exec("node node_modules\\verdaccio\\build\\lib\\cli");
+    const verdaccio = exec(
+      `node ${joinPath(verdaccioPath, "build", "lib", "cli")}`
+    );
 
     verdaccio.stdout.on("data", (data: string) => {
       outMinor(data.trim(), InfoSource.VERDACCIO);
@@ -173,5 +185,18 @@ export const installCache = (
   };
 
   // Kick off process
+  outMajor("Starting cache install.");
   cleanCache();
 };
+
+const defaultPrint = (data: IScriptMessage) => {
+  if (data.type !== ScriptMessageType.MINOR) {
+    console.log(`\n[${data.source}] ${data.message}\n`);
+  } else {
+    console.log(`[${data.source}] ${data.message}`);
+  }
+};
+
+installCache(["lodash", "react"], defaultPrint, defaultPrint, defaultPrint);
+
+console.log(__dirname);
