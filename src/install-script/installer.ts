@@ -198,13 +198,3 @@ export const installCache = (
   outMajor("Starting cache install.");
   cleanCache();
 };
-
-const defaultPrint = (data: IScriptMessage) => {
-  if (data.type !== ScriptMessageType.MINOR) {
-    console.log(`** [${data.source}] ${data.message}\n`);
-  } else {
-    console.log(`[${data.source}] ${data.message}`);
-  }
-};
-
-installCache(["lodash", "react"], defaultPrint, defaultPrint, defaultPrint);
