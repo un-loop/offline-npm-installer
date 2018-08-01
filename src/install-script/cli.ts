@@ -3,6 +3,7 @@
 import * as program from "commander";
 import { installCache, IScriptMessage, ScriptMessageType } from "./installer";
 
+// Prints output to stdout
 const print = (data: IScriptMessage) => {
   if (data.type !== ScriptMessageType.MINOR) {
     console.log(`** [${data.source}] ${data.message}\n`);
@@ -15,17 +16,12 @@ program
   .version("v1.0.0")
   .command("install <pkg> [otherPkgs...]")
   .action((pkg: string, otherPkgs: string[]) => {
-    console.log("HEY");
-    console.log(pkg);
+    let packages = [pkg];
     if (otherPkgs) {
-      otherPkgs.forEach((oPkg: string) => {
-        console.log(oPkg);
-      });
+      packages = packages.concat(otherPkgs);
     }
+
+    installCache(packages, print, print, print);
   });
 
 program.parse(process.argv);
-
-if (false) {
-  installCache(["lodash", "react"], print, print, print);
-}

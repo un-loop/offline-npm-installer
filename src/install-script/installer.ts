@@ -37,10 +37,11 @@ const makeOutputter = (
 /**
  * Installs an npm cache through Verdaccio and bundles the results in a zip file.
  * @param packages the list of package names to install
- * @param outputPath the directory in which storage.zip should be placed
  * @param onInfo callback function for info messages
  * @param onError callback function for error messages
  * @param onComplete callback function for when the installation is complete
+ * @param outputPath the directory in which storage.zip should be placed
+ * @param verdaccioPath the directory in which the verdaccio source is located (usually node_modules)
  */
 export const installCache = (
   packages: string[],
@@ -155,8 +156,6 @@ export const installCache = (
         "cli"
       )} --config ${joinPath(__dirname, "config.yaml")}`
     );
-
-    // const verdaccio = exec(`${joinPath(verdaccioPath, "bin", "verdaccio")}`);
 
     verdaccio.stdout.on("data", (data: string) => {
       outMinor(data.trim(), InfoSource.VERDACCIO);
