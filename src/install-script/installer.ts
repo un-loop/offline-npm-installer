@@ -27,12 +27,13 @@ export interface IScriptMessage {
 const makeOutputter = (
   callback: (data: IScriptMessage) => void,
   type: ScriptMessageType
-) => (message: string, source: InfoSource = InfoSource.OFFLINE_NPM) =>
+) => (message: string, source: InfoSource = InfoSource.OFFLINE_NPM) => {
   callback({
     message,
     source,
     type
   });
+};
 
 /**
  * Installs an npm cache through Verdaccio and bundles the results in a zip file.

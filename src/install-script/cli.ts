@@ -12,12 +12,13 @@ const print = (data: IScriptMessage) => {
   }
 };
 
+/* tslint:disable no-unsafe-any (tslint complains about commander) */
 program
   .version("v1.0.0")
   .command("install <pkg> [otherPkgs...]")
   .action((pkg: string, otherPkgs: string[]) => {
     let packages = [pkg];
-    if (otherPkgs) {
+    if (otherPkgs.length > 0) {
       packages = packages.concat(otherPkgs);
     }
 
