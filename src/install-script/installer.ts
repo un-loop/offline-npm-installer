@@ -4,10 +4,9 @@ import { createWriteStream, ensureDir, remove } from "fs-extra";
 import { join as joinPath } from "path";
 
 export enum ScriptMessageType {
-  MINOR,
-  MAJOR,
-  ERROR,
-  COMPLETE
+  INFO_MINOR,
+  INFO_MAJOR,
+  WARNING
 }
 
 export enum InfoSource {
@@ -23,32 +22,16 @@ export interface IScriptMessage {
   source: InfoSource;
 }
 
-// Utility to make using callbacks with IScriptMessages easier
-const makeOutputter = (
-  callback: (data: IScriptMessage) => void,
-  type: ScriptMessageType
-) => (message: string, source: InfoSource = InfoSource.OFFLINE_NPM) => {
-  callback({
-    message,
-    source,
-    type
-  });
-};
-
 /**
  * Installs an npm cache through Verdaccio and bundles the results in a zip file.
  * @param packages the list of package names to install
  * @param onInfo callback function for info messages
- * @param onError callback function for error messages
- * @param onComplete callback function for when the installation is complete
  * @param outputPath the directory in which storage.zip should be placed
  * @param verdaccioPath the directory in which the verdaccio source is located (usually node_modules)
  */
 export const installCache = async (
   packages: string[],
   onInfo: (data: IScriptMessage) => void,
-  onError: (data: IScriptMessage) => void,
-  onComplete: (data: IScriptMessage) => void,
   outputPath: string = joinPath(__dirname, "out"),
   verdaccioPath: string = joinPath(
     __dirname,
@@ -58,144 +41,209 @@ export const installCache = async (
     "verdaccio"
   )
 ): Promise<string> => {
-  const outMinor = makeOutputter(onInfo, ScriptMessageType.MINOR);
-  const outMajor = makeOutputter(onInfo, ScriptMessageType.MAJOR);
-  const outError = makeOutputter(onError, ScriptMessageType.ERROR);
-  const outComplete = makeOutputter(onComplete, ScriptMessageType.COMPLETE);
-
   const tempStoragePath = joinPath(__dirname, "storage");
   const outputZipPath = joinPath(outputPath, "storage.zip");
 
-  outMajor("Starting cache install.");
-
-  // Clean npm cache (required for packages to get cached by Verdaccio)
-  await new Promise(resolve => {
-    outMajor("Clearing NPM cache.");
-
-    const cleanProcess = exec("npm cache clean --force");
-
-    cleanProcess.stdout.on("data", (data: string) => {
-      outMinor(data.trim(), InfoSource.NPM);
-    });
-
-    cleanProcess.on("exit", resolve);
+  onInfo({
+    message: "Starting cache install.",
+    source: InfoSource.OFFLINE_NPM,
+    type: ScriptMessageType.INFO_MAJOR
   });
 
-  // Delete local Verdaccio storage and/or storage.zip, if they exist
-  await new Promise(resolve => {
-    outMajor("Deleting old files.");
-
-    remove(tempStoragePath, () => {
-      remove(outputZipPath, resolve);
-    });
-  });
-
-  // Spin up Verdaccio
-  const verdaccio: ChildProcess = await new Promise<ChildProcess>(resolve => {
-    outMajor("Booting Verdaccio instance.");
-
-    const verdaccioProcess = exec(
-      `node ${joinPath(
-        verdaccioPath,
-        "build",
-        "lib",
-        "cli"
-      )} --config ${joinPath(__dirname, "config.yaml")}`
-    );
-
-    verdaccioProcess.stdout.on("data", (data: string) => {
-      outMinor(data.trim(), InfoSource.VERDACCIO);
-
-      // When Verdaccio emits a successful load message, start installing packages
-      if (data.indexOf(`Plugin successfully loaded: audit`) !== -1) {
-        resolve(verdaccioProcess);
-      }
-    });
-
-    verdaccioProcess.stderr.on("data", (data: string) => {
-      outError(data.trim());
-    });
-  });
-
-  // Install the packages
-  await new Promise(resolve => {
-    outMajor("Starting package installs.");
-
-    let packageNum = 0;
-
-    const installPackage = () => {
-      outMajor(
-        `Installing '${packages[packageNum]}' (${packageNum + 1}/${
-          packages.length
-        })`
-      );
-
-      const install = exec(
-        `npm install ${
-          packages[packageNum]
-        } --registry http://localhost:4873/ --no-save`
-      );
-
-      install.stdout.on("data", (data: string) => {
-        outMinor(data.trim(), InfoSource.NPM);
+  try {
+    // Clean npm cache (required for packages to get cached by Verdaccio)
+    await new Promise(resolve => {
+      onInfo({
+        message: "Clearing NPM cache.",
+        source: InfoSource.OFFLINE_NPM,
+        type: ScriptMessageType.INFO_MAJOR
       });
 
-      install.stderr.on("data", (data: string) => {
-        outError(data.trim(), InfoSource.NPM);
+      const cleanProcess = exec("npm cache clean --force");
+
+      cleanProcess.stdout.on("data", (data: string) => {
+        onInfo({
+          message: data.trim(),
+          source: InfoSource.NPM,
+          type: ScriptMessageType.INFO_MINOR
+        });
       });
 
-      install.on("exit", () => {
-        if (++packageNum < packages.length) {
-          installPackage();
-        } else {
-          outMajor(`Finished installing ${packages.length} packages.`);
-          resolve();
+      cleanProcess.on("exit", resolve);
+    });
+
+    // Delete local Verdaccio storage and/or storage.zip, if they exist
+    await new Promise(resolve => {
+      onInfo({
+        message: "Deleting old files.",
+        source: InfoSource.OFFLINE_NPM,
+        type: ScriptMessageType.INFO_MAJOR
+      });
+
+      remove(tempStoragePath, () => {
+        remove(outputZipPath, resolve);
+      });
+    });
+
+    // Spin up Verdaccio
+    const verdaccio: ChildProcess = await new Promise<ChildProcess>(resolve => {
+      onInfo({
+        message: "Booting Verdaccio instance.",
+        source: InfoSource.OFFLINE_NPM,
+        type: ScriptMessageType.INFO_MAJOR
+      });
+
+      const verdaccioProcess = exec(
+        `node ${joinPath(
+          verdaccioPath,
+          "build",
+          "lib",
+          "cli"
+        )} --config ${joinPath(__dirname, "config.yaml")}`
+      );
+
+      verdaccioProcess.stdout.on("data", (data: string) => {
+        onInfo({
+          message: data.trim(),
+          source: InfoSource.VERDACCIO,
+          type: ScriptMessageType.INFO_MINOR
+        });
+
+        // When Verdaccio emits a successful load message, start installing packages
+        if (data.indexOf(`Plugin successfully loaded: audit`) !== -1) {
+          resolve(verdaccioProcess);
         }
       });
-    };
 
-    installPackage();
-  });
+      verdaccioProcess.stderr.on("data", (data: string) => {
+        onInfo({
+          message: data.trim(),
+          source: InfoSource.VERDACCIO,
+          type: ScriptMessageType.WARNING
+        });
+      });
+    });
 
-  // Stop Verdaccio
-  await new Promise(resolve => {
-    outMajor("Stopping Verdaccio.");
-
-    // See https://stackoverflow.com/questions/23706055
-    spawn("taskkill", ["/pid", verdaccio.pid.toString(), "/f", "/t"]).on(
-      "exit",
-      resolve
-    );
-  });
-
-  // Package the cache into a .zip file
-  await new Promise(resolve => {
-    outMajor("Bundling the cache into a zip file.");
-
-    ensureDir(outputPath, () => {
-      const archive = archiver("zip");
-      const zipOut = createWriteStream(outputZipPath);
-
-      archive.on("end", resolve);
-      archive.on("error", err => {
-        outError(err.message, InfoSource.ARCHIVER);
+    // Install the packages
+    await new Promise(resolve => {
+      onInfo({
+        message: "Starting package installs.",
+        source: InfoSource.OFFLINE_NPM,
+        type: ScriptMessageType.INFO_MAJOR
       });
 
-      archive.pipe(zipOut);
-      archive.directory(tempStoragePath, false);
-      archive.finalize();
+      let packageNum = 0;
+
+      const installPackage = () => {
+        onInfo({
+          message: `Installing '${packages[packageNum]}' (${packageNum + 1}/${
+            packages.length
+          })`,
+          source: InfoSource.OFFLINE_NPM,
+          type: ScriptMessageType.INFO_MAJOR
+        });
+
+        const install = exec(
+          `npm install ${
+            packages[packageNum]
+          } --registry http://localhost:4873/ --no-save`
+        );
+
+        install.stdout.on("data", (data: string) => {
+          onInfo({
+            message: data.trim(),
+            source: InfoSource.NPM,
+            type: ScriptMessageType.INFO_MINOR
+          });
+        });
+
+        install.stderr.on("data", (data: string) => {
+          onInfo({
+            message: data.trim(),
+            source: InfoSource.NPM,
+            type: ScriptMessageType.WARNING
+          });
+        });
+
+        install.on("exit", () => {
+          if (++packageNum < packages.length) {
+            installPackage();
+          } else {
+            onInfo({
+              message: `Finished installing ${packages.length} packages.`,
+              source: InfoSource.OFFLINE_NPM,
+              type: ScriptMessageType.INFO_MAJOR
+            });
+            resolve();
+          }
+        });
+      };
+
+      installPackage();
     });
-  });
 
-  // Delete the storage directory and output the final results
-  await new Promise(resolve => {
-    outMajor("Deleting temporary files.");
+    // Stop Verdaccio
+    await new Promise(resolve => {
+      onInfo({
+        message: "Stopping Verdaccio.",
+        source: InfoSource.OFFLINE_NPM,
+        type: ScriptMessageType.INFO_MAJOR
+      });
 
-    remove(tempStoragePath, () => {
-      outComplete(`Cache created at ${outputZipPath}!`);
-      resolve();
+      // See https://stackoverflow.com/questions/23706055
+      spawn("taskkill", ["/pid", verdaccio.pid.toString(), "/f", "/t"]).on(
+        "exit",
+        resolve
+      );
     });
-  });
 
-  return Promise.resolve(outputZipPath);
+    // Package the cache into a .zip file
+    await new Promise(resolve => {
+      onInfo({
+        message: "Bundling the cache into a zip file.",
+        source: InfoSource.OFFLINE_NPM,
+        type: ScriptMessageType.INFO_MAJOR
+      });
+
+      ensureDir(outputPath, () => {
+        const archive = archiver("zip");
+        const zipOut = createWriteStream(outputZipPath);
+
+        archive.on("end", resolve);
+        archive.on("error", err => {
+          onInfo({
+            message: err.message,
+            source: InfoSource.NPM,
+            type: ScriptMessageType.WARNING
+          });
+        });
+
+        archive.pipe(zipOut);
+        archive.directory(tempStoragePath, false);
+        archive.finalize();
+      });
+    });
+
+    // Delete the storage directory and output the final results
+    await new Promise(resolve => {
+      onInfo({
+        message: "Deleting temporary files.",
+        source: InfoSource.OFFLINE_NPM,
+        type: ScriptMessageType.INFO_MAJOR
+      });
+
+      remove(tempStoragePath, () => {
+        onInfo({
+          message: `Cache created at ${outputZipPath}!`,
+          source: InfoSource.OFFLINE_NPM,
+          type: ScriptMessageType.INFO_MAJOR
+        });
+        resolve();
+      });
+    });
+
+    return Promise.resolve(outputZipPath);
+  } catch (err) {
+    return Promise.reject(err);
+  }
 };

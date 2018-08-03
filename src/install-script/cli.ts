@@ -5,7 +5,7 @@ import { installCache, IScriptMessage, ScriptMessageType } from "./installer";
 
 // Prints output to stdout
 const print = (data: IScriptMessage) => {
-  if (data.type !== ScriptMessageType.MINOR) {
+  if (data.type !== ScriptMessageType.INFO_MINOR) {
     console.log(`** [${data.source}] ${data.message}\n`);
   } else {
     console.log(`[${data.source}] ${data.message}`);
@@ -22,7 +22,7 @@ program
       packages = packages.concat(otherPkgs);
     }
 
-    installCache(packages, print, print, print);
+    installCache(packages, print);
   });
 
 program.parse(process.argv);
