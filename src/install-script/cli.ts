@@ -25,6 +25,8 @@ program
     installCache({
       onInfo: print,
       packages
+    }).catch(err => {
+      throw err;
     });
   });
 

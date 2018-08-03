@@ -54,7 +54,7 @@ export const installCache = async ({
 
   try {
     // Clean npm cache (required for packages to get cached by Verdaccio)
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       onInfo({
         message: "Clearing NPM cache.",
         source: InfoSource.OFFLINE_NPM,
@@ -75,7 +75,7 @@ export const installCache = async ({
     });
 
     // Delete local Verdaccio storage and/or storage.zip, if they exist
-    await new Promise(resolve => {
+    await new Promise<Error>(resolve => {
       onInfo({
         message: "Deleting old files.",
         source: InfoSource.OFFLINE_NPM,
@@ -127,7 +127,7 @@ export const installCache = async ({
     });
 
     // Install the packages
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       onInfo({
         message: "Starting package installs.",
         source: InfoSource.OFFLINE_NPM,
@@ -185,7 +185,7 @@ export const installCache = async ({
     });
 
     // Stop Verdaccio
-    await new Promise(resolve => {
+    await new Promise<Error>(resolve => {
       onInfo({
         message: "Stopping Verdaccio.",
         source: InfoSource.OFFLINE_NPM,
@@ -196,7 +196,7 @@ export const installCache = async ({
     });
 
     // Package the cache into a .zip file
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       onInfo({
         message: "Bundling the cache into a zip file.",
         source: InfoSource.OFFLINE_NPM,
@@ -223,7 +223,7 @@ export const installCache = async ({
     });
 
     // Delete the storage directory and output the final results
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       onInfo({
         message: "Deleting temporary files.",
         source: InfoSource.OFFLINE_NPM,
