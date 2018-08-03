@@ -1,7 +1,8 @@
 import * as archiver from "archiver";
-import { ChildProcess, exec, spawn } from "child_process";
+import { ChildProcess, exec } from "child_process";
 import { createWriteStream, ensureDir, remove } from "fs-extra";
 import { join as joinPath } from "path";
+import * as treekill from "tree-kill";
 
 export enum ScriptMessageType {
   INFO_MINOR,
@@ -191,11 +192,7 @@ export const installCache = async ({
         type: ScriptMessageType.INFO_MAJOR
       });
 
-      // See https://stackoverflow.com/questions/23706055
-      spawn("taskkill", ["/pid", verdaccio.pid.toString(), "/f", "/t"]).on(
-        "exit",
-        resolve
-      );
+      treekill(verdaccio.pid, undefined, resolve);
     });
 
     // Package the cache into a .zip file
@@ -242,9 +239,9 @@ export const installCache = async ({
         resolve();
       });
     });
-
-    return Promise.resolve(outputZipPath);
   } catch (err) {
     return Promise.reject(err);
   }
+
+  return Promise.resolve(outputZipPath);
 };
