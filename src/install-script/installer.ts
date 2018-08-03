@@ -44,7 +44,7 @@ const makeOutputter = (
  * @param outputPath the directory in which storage.zip should be placed
  * @param verdaccioPath the directory in which the verdaccio source is located (usually node_modules)
  */
-export const installCache = (
+export const installCache = async (
   packages: string[],
   onInfo: (data: IScriptMessage) => void,
   onError: (data: IScriptMessage) => void,
@@ -57,7 +57,7 @@ export const installCache = (
     "node_modules",
     "verdaccio"
   )
-): void => {
+): Promise<string> => {
   const outMinor = makeOutputter(onInfo, ScriptMessageType.MINOR);
   const outMajor = makeOutputter(onInfo, ScriptMessageType.MAJOR);
   const outError = makeOutputter(onError, ScriptMessageType.ERROR);
@@ -66,47 +66,59 @@ export const installCache = (
   const tempStoragePath = joinPath(__dirname, "storage");
   const outputZipPath = joinPath(outputPath, "storage.zip");
 
-  // Delete the storage directory and output the final results
-  const endScript = () => {
-    outMajor("Deleting temporary files.");
+  outMajor("Starting cache install.");
+
+  // Clean npm cache (required for packages to get cached by Verdaccio)
+  await new Promise(resolve => {
+    outMajor("Clearing NPM cache.");
+
+    const cleanProcess = exec("npm cache clean --force");
+
+    cleanProcess.stdout.on("data", (data: string) => {
+      outMinor(data.trim(), InfoSource.NPM);
+    });
+
+    cleanProcess.on("exit", resolve);
+  });
+
+  // Delete local Verdaccio storage and/or storage.zip, if they exist
+  await new Promise(resolve => {
+    outMajor("Deleting old files.");
 
     remove(tempStoragePath, () => {
-      outComplete(`Cache created at ${outputZipPath}!`);
+      remove(outputZipPath, resolve);
     });
-  };
+  });
 
-  // Package the cache into a .zip file
-  const packageCache = () => {
-    outMajor("Bundling the cache into a zip file.");
+  // Spin up Verdaccio
+  const verdaccio: ChildProcess = await new Promise<ChildProcess>(resolve => {
+    outMajor("Booting Verdaccio instance.");
 
-    ensureDir(outputPath, () => {
-      const archive = archiver("zip");
-      const zipOut = createWriteStream(outputZipPath);
-
-      archive.on("end", endScript);
-      archive.on("error", err => {
-        outError(err.message, InfoSource.ARCHIVER);
-      });
-
-      archive.pipe(zipOut);
-      archive.directory(tempStoragePath, false);
-      archive.finalize();
-    });
-  };
-
-  // Stop Verdaccio
-  const stopVerdaccio = (verdaccio: ChildProcess) => {
-    outMajor("Stopping Verdaccio.");
-
-    // See https://stackoverflow.com/questions/23706055
-    spawn("taskkill", ["/pid", verdaccio.pid.toString(), "/f", "/t"]).on(
-      "exit",
-      packageCache
+    const verdaccioProcess = exec(
+      `node ${joinPath(
+        verdaccioPath,
+        "build",
+        "lib",
+        "cli"
+      )} --config ${joinPath(__dirname, "config.yaml")}`
     );
-  };
+
+    verdaccioProcess.stdout.on("data", (data: string) => {
+      outMinor(data.trim(), InfoSource.VERDACCIO);
+
+      // When Verdaccio emits a successful load message, start installing packages
+      if (data.indexOf(`Plugin successfully loaded: audit`) !== -1) {
+        resolve(verdaccioProcess);
+      }
+    });
+
+    verdaccioProcess.stderr.on("data", (data: string) => {
+      outError(data.trim());
+    });
+  });
 
   // Install the packages
-  const installPackages = (verdaccio: ChildProcess) => {
+  await new Promise(resolve => {
     outMajor("Starting package installs.");
 
     let packageNum = 0;
@@ -137,64 +149,53 @@ export const installCache = (
           installPackage();
         } else {
           outMajor(`Finished installing ${packages.length} packages.`);
-          stopVerdaccio(verdaccio);
+          resolve();
         }
       });
     };
 
     installPackage();
-  };
+  });
 
-  // Spin up Verdaccio
-  const startVerdaccio = () => {
-    outMajor("Booting Verdaccio instance.");
+  // Stop Verdaccio
+  await new Promise(resolve => {
+    outMajor("Stopping Verdaccio.");
 
-    const verdaccio = exec(
-      `node ${joinPath(
-        verdaccioPath,
-        "build",
-        "lib",
-        "cli"
-      )} --config ${joinPath(__dirname, "config.yaml")}`
+    // See https://stackoverflow.com/questions/23706055
+    spawn("taskkill", ["/pid", verdaccio.pid.toString(), "/f", "/t"]).on(
+      "exit",
+      resolve
     );
+  });
 
-    verdaccio.stdout.on("data", (data: string) => {
-      outMinor(data.trim(), InfoSource.VERDACCIO);
+  // Package the cache into a .zip file
+  await new Promise(resolve => {
+    outMajor("Bundling the cache into a zip file.");
 
-      // When Verdaccio emits a successful load message, start installing packages
-      if (data.indexOf(`Plugin successfully loaded: audit`) !== -1) {
-        installPackages(verdaccio);
-      }
+    ensureDir(outputPath, () => {
+      const archive = archiver("zip");
+      const zipOut = createWriteStream(outputZipPath);
+
+      archive.on("end", resolve);
+      archive.on("error", err => {
+        outError(err.message, InfoSource.ARCHIVER);
+      });
+
+      archive.pipe(zipOut);
+      archive.directory(tempStoragePath, false);
+      archive.finalize();
     });
+  });
 
-    verdaccio.stderr.on("data", (data: string) => {
-      outError(data.trim());
-    });
-  };
-
-  // Delete local Verdaccio storage and/or storage.zip, if they exist
-  const deleteOldFiles = () => {
-    outMajor("Deleting old files.");
+  // Delete the storage directory and output the final results
+  await new Promise(resolve => {
+    outMajor("Deleting temporary files.");
 
     remove(tempStoragePath, () => {
-      remove(outputZipPath, startVerdaccio);
+      outComplete(`Cache created at ${outputZipPath}!`);
+      resolve();
     });
-  };
+  });
 
-  // Clean npm cache (required for packages to get cached by Verdaccio)
-  const cleanCache = () => {
-    outMajor("Clearing NPM cache.");
-
-    const cleanProcess = exec("npm cache clean --force");
-
-    cleanProcess.stdout.on("data", (data: string) => {
-      outMinor(data.trim(), InfoSource.NPM);
-    });
-
-    cleanProcess.on("exit", deleteOldFiles);
-  };
-
-  // Kick off process
-  outMajor("Starting cache install.");
-  cleanCache();
+  return Promise.resolve(outputZipPath);
 };
