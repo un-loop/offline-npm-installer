@@ -22,7 +22,10 @@ program
       packages = packages.concat(otherPkgs);
     }
 
-    installCache(packages, print);
+    installCache({
+      onInfo: print,
+      packages
+    });
   });
 
 program.parse(process.argv);

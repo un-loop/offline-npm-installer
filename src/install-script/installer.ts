@@ -22,6 +22,13 @@ export interface IScriptMessage {
   source: InfoSource;
 }
 
+export interface InstallCacheSettings {
+  packages: string[];
+  onInfo(data: IScriptMessage): void;
+  outputPath?: string;
+  verdaccioPath?: string;
+}
+
 /**
  * Installs an npm cache through Verdaccio and bundles the results in a zip file.
  * @param packages the list of package names to install
@@ -29,18 +36,12 @@ export interface IScriptMessage {
  * @param outputPath the directory in which storage.zip should be placed
  * @param verdaccioPath the directory in which the verdaccio source is located (usually node_modules)
  */
-export const installCache = async (
-  packages: string[],
-  onInfo: (data: IScriptMessage) => void,
-  outputPath: string = joinPath(__dirname, "out"),
-  verdaccioPath: string = joinPath(
-    __dirname,
-    "..",
-    "..",
-    "node_modules",
-    "verdaccio"
-  )
-): Promise<string> => {
+export const installCache = async ({
+  packages,
+  onInfo,
+  outputPath = joinPath(__dirname, "out"),
+  verdaccioPath = joinPath(__dirname, "..", "..", "node_modules", "verdaccio")
+}: InstallCacheSettings): Promise<string> => {
   const tempStoragePath = joinPath(__dirname, "storage");
   const outputZipPath = joinPath(outputPath, "storage.zip");
 
